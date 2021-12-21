@@ -31,8 +31,11 @@ struct player_t{
     QString name="";
     QString team="";
     int number=-1;
+    DisplayLabel *lastAppeared_window;
+    QPoint lastAppeared_position; //视频坐标系
+    int lastAppearwd_time_ms;
     QList<QPointF> positions; //标准足球场
-    QList<QPointF> positions_label; //缩略图
+    QList<QPointF> positions_label; //png
     QList<QDateTime> appearedTimes;
     QLineSeries *series_speed, *series_distance;
     qreal max_speed=0, max_distance=0;
@@ -75,10 +78,14 @@ private slots:
     void playersPositionChanged_left(QList<QPoint>, QList<int>);
     void playersPositionChanged_right(QList<QPoint>, QList<int>);
     void setVideoInfo(int, QDateTime);
+    void addingDone();
+
+    void on_pushButton_addNewLabel_clicked();
 
 private:
     void getLabels();
     void updateChart();
+    void updateHeat();
 
     Ui::MainWindow *ui;
     QTimer *timer;
@@ -89,9 +96,9 @@ private:
     AddTeamDialog* teamDialog;
     CalibrationDialog* calibrationDialog;
 
-    QImage field;
+    QImage image_field, image_outline;
     QTransform video2png_left, video2png_right, video2standard_left, video2standard_right;
-    QTransform field2label; //png坐标到展示坐标的转换
+    QTransform field2label, field2heat; //png坐标到展示坐标（mainwindow yuan点）的转换,png到热力图转化(以heat左上为0点）
     QList<QPoint> positions_left, positions_right;
     QList<int> ids_left, ids_right;
 
@@ -99,6 +106,11 @@ private:
     QPen pen_number;
     QPen pen_trace[20];
     QFont font_number;
+    QColor colors_heat[256];
+    QImage dataImg, heatImg;
+    QList<int> count_positions;
+    int maxCount=0;
+    int heatMapWidth = 1;
     //QPainter* painter;
 
     QChart *chart_speed, *chart_distance;

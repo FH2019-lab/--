@@ -8,7 +8,7 @@ DisplayLabel::DisplayLabel(QWidget *){
     pen_box.setColor(Qt::red);
     pen_box_chosen.setWidth(2);
     pen_box_chosen.setColor(Qt::green);
-    pen_points.setWidth(4);
+    pen_points.setWidth(8);
     pen_points.setColor(Qt::green);
     pen_text.setWidth(2);
     pen_text.setColor(Qt::red);
@@ -98,10 +98,6 @@ QList<QList<box_t>>* DisplayLabel::getAllLabels(){
     return &labels_list;
 }
 
-void DisplayLabel::addLabel(box_t label){
-    labels_list[frameidx].append(label);
-}
-
 void DisplayLabel::removeLabel(int idx){
     // 删除第idx个标签
     labels_list[frameidx].erase(labels_list[frameidx].cbegin()+idx);
@@ -145,6 +141,10 @@ void DisplayLabel::getSelectedItem(QPoint mousePos, int &s_label, int &s_point){
     }
 }
 
+QImage DisplayLabel::getImage(){
+    QImage img = QImage((const uchar*)videoFrame.data, videoFrame.cols, videoFrame.rows, videoFrame.step, QImage::Format_RGB888);
+    return img;
+}
 
 void DisplayLabel::setVideoPostion(int pos){
     frameidx = pos;
@@ -163,8 +163,10 @@ void DisplayLabel::setMode(int m){
     switch(m){
     case 0:
         mode = DISPLAY;
+        break;
     case 1:
         mode = EDITING;
+        break;
     case 2:
         mode = ADDING;
     }
@@ -233,10 +235,7 @@ void DisplayLabel::paintEvent(QPaintEvent *){
         if (i == selected_label){
             // 画控制点
             painter.setPen(pen_points);
-            painter.drawRect(bbox->rect.x()-2, bbox->rect.y()-2, 4, 4);
-            painter.drawRect(bbox->rect.x()-2, bbox->rect.y()+bbox->rect.height()-2, 4, 4);
-            painter.drawRect(bbox->rect.x()+bbox->rect.width()-2, bbox->rect.y()+bbox->rect.height()-2, 4, 4);
-            painter.drawRect(bbox->rect.x()+bbox->rect.width()-2, bbox->rect.y()-2, 4, 4);
+            painter.drawPoints(bbox->rect);
             painter.setPen(pen_box_chosen);
         }
         else
@@ -245,29 +244,44 @@ void DisplayLabel::paintEvent(QPaintEvent *){
         bbox++;
     }
 
-    if (mode==EDITING){
-
-    }
-    else{
-        //正在添加新的矩形
-
+    if (mode == ADDING && !alreadyAdd1){
+        //有单独点
+        painter.setPen(pen_points);
+        painter.drawPoint(label2frame.map(last_pos));
     }
 }
 
 void DisplayLabel::mousePressEvent(QMouseEvent *event){
+    mousePressed = true;
     if (mode==DISPLAY)
         return;
     QPoint pos = event->pos();
-    // bug:点击某一个画面时，旁边画面中已被选中的不会消失
-    int selected_point;
-    getSelectedItem(pos, selected_label, selected_point);
-    if (selected_label!=-1)
-        labels_list[frameidx][selected_label].selectedPoint = selected_point;
-    if (selected_point!=-1)
-        editMode=RESIZING;
-    else if (selected_label!=-1){
-        editMode=MOVING;
-        last_pos = pos;
+
+    if (mode == ADDING){
+        if (!alreadyAdd1){
+            last_pos = pos;
+            selected_label = -1;
+        }
+        else{
+            //添加新框
+            QRectF rect(label2frame.map(last_pos), label2frame.map(pos));
+            box_t bbox;
+            bbox.rect = rect;
+            selected_label = labels_list[frameidx].length();
+            labels_list[frameidx].append(bbox);
+        }
+    }
+    else{ //EDITING
+        int selected_point;
+        getSelectedItem(pos, selected_label, selected_point);
+        if (selected_label!=-1)
+            labels_list[frameidx][selected_label].selectedPoint = selected_point;
+        if (selected_point!=-1)
+            editMode=RESIZING;
+        else if (selected_label!=-1){
+            editMode=MOVING;
+            last_pos = pos;
+        }
     }
     update();
     emit selectedLabelChanged(selected_label);
@@ -282,48 +296,72 @@ void DisplayLabel::mouseMoveEvent(QMouseEvent *event){
     int s_label=-1, s_point=-1;
     auto bbox = labels_list[frameidx].begin()+selected_label;
 
-    switch (editMode) {
-    case NONE: //没有正在改变选择框形态，在鼠标落入选框时改变样式
-        getSelectedItem(pos, s_label, s_point);
-        switch(s_point){
-        case 0:case 2:
-            this->setCursor(Qt::SizeFDiagCursor);
+    if (mode == EDITING){
+        switch (editMode) {
+        case NONE: //没有正在改变选择框形态，在鼠标落入选框时改变样式
+            getSelectedItem(pos, s_label, s_point);
+            switch(s_point){
+            case 0:case 2:
+                this->setCursor(Qt::SizeFDiagCursor);
+                break;
+            case 1:case 3:
+                this->setCursor(Qt::SizeBDiagCursor);
+                break;
+            default:
+                if (s_label!=-1)
+                    this->setCursor(Qt::SizeAllCursor);
+                else
+                    this->setCursor(Qt::ArrowCursor);
+            }
             break;
-        case 1:case 3:
-            this->setCursor(Qt::SizeBDiagCursor);
+        case RESIZING:
+            switch (bbox->selectedPoint) {
+            case 0:
+                bbox->rect.setTopLeft(pos_frame);
+                break;
+            case 1:
+                bbox->rect.setTopRight(pos_frame);
+                break;
+            case 2:
+                bbox->rect.setBottomRight(pos_frame);
+                break;
+            case 3:
+                bbox->rect.setBottomLeft(pos_frame);
+            }
+            update();
             break;
-        default:
-            if (s_label!=-1)
-                this->setCursor(Qt::SizeAllCursor);
-            else
-                this->setCursor(Qt::ArrowCursor);
+        case MOVING:
+            bbox->rect.moveTo(bbox->rect.x()+diff.x(), bbox->rect.y()+diff.y());
+            last_pos = pos;
+            update();
         }
-        break;
-    case RESIZING:
-        switch (bbox->selectedPoint) {
-        case 0:
-            bbox->rect.setTopLeft(pos_frame);
-            break;
-        case 1:
-            bbox->rect.setTopRight(pos_frame);
-            break;
-        case 2:
-            bbox->rect.setBottomRight(pos_frame);
-            break;
-        case 3:
-            bbox->rect.setBottomLeft(pos_frame);
-        }
-        update();
-        break;
-    case MOVING:
-        bbox->rect.moveTo(bbox->rect.x()+diff.x(), bbox->rect.y()+diff.y());
-        last_pos = pos;
+    }
+    else{
+        //ADDING
+        if (!alreadyAdd1 || !mousePressed)
+            return;
+        labels_list[frameidx][selected_label].rect.setBottomRight(pos_frame);
         update();
     }
 }
 
 void DisplayLabel::mouseReleaseEvent(QMouseEvent *){
-    editMode = NONE;
-    if (selected_label != -1)
-        labels_list[frameidx][selected_label].selectedPoint = -1;
+    mousePressed = false;
+    switch (mode) {
+    case ADDING:
+        if (alreadyAdd1){
+            mode = EDITING;
+            emit addingDone();
+        }
+        alreadyAdd1 = !alreadyAdd1;
+        break;
+    case EDITING:
+        editMode = NONE;
+        if (selected_label != -1)
+            labels_list[frameidx][selected_label].selectedPoint = -1;
+        break;
+    default:
+        break;
+    }
+
 }
