@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/new/prefix1"/>
+    <qresource prefix="/pic"/>
+    <qresource prefix="/picture"/>
+    <qresource prefix="/">
+        <file>pic/ground.png</file>
+        <file>pic/field.png</file>
+        <file>pic/field_outline.png</file>
+    </qresource>
+</RCC>

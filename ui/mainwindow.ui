@@ -1,0 +1,660 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>720</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_6">
+    <item>
+     <layout class="QHBoxLayout" name="Layout_body" stretch="5,2">
+      <item>
+       <layout class="QVBoxLayout" name="vlayout_5" stretch="3,2">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <layout class="QHBoxLayout" name="video_h_Layout">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout" stretch="5">
+              <item>
+               <widget class="DisplayLabel" name="video_label_left">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_2" stretch="5">
+              <item>
+               <widget class="DisplayLabel" name="video_label_right">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_load">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>load video</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="0,0,0">
+            <item>
+             <widget class="QPushButton" name="pushButton_play">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>30</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSlider" name="horizontalSlider">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="checkBox">
+              <property name="text">
+               <string>bounding box</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_transformed" stretch="5,1,4">
+          <item>
+           <spacer name="picture_field">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <item>
+             <widget class="QLabel" name="label_text_detail">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>detail:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QWidget" name="widget" native="true">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QTabWidget" name="tabWidget">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Ignored" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="currentIndex">
+         <number>1</number>
+        </property>
+        <widget class="QWidget" name="tab">
+         <attribute name="title">
+          <string>Information</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_10">
+          <item>
+           <widget class="QLabel" name="text_chosen_player_id">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>chosen player id:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="comboBox_id"/>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="groupBox_basic_info">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>9</pointsize>
+              <weight>75</weight>
+              <italic>true</italic>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QGroupBox {
+	border-color: rgb(156, 156, 156);
+	border-width: 1px;
+	border-style: solid;
+	margin-top: 3ex;
+}
+QGroupBox::title {	
+	subcontrol-origin: margin;
+	subcontrol-position: top left;
+	left: 10px;
+	margin-left: 2px;
+	padding: 0  0px;
+}</string>
+            </property>
+            <property name="title">
+             <string>basic information:</string>
+            </property>
+            <property name="flat">
+             <bool>false</bool>
+            </property>
+            <property name="checkable">
+             <bool>false</bool>
+            </property>
+            <layout class="QGridLayout" name="gridLayout">
+             <item row="0" column="0">
+              <widget class="QLabel" name="text_name">
+               <property name="text">
+                <string>name:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1" colspan="2">
+              <widget class="QLineEdit" name="lineEdit_name"/>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="text_team">
+               <property name="text">
+                <string>team:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QComboBox" name="comboBox_team">
+               <item>
+                <property name="text">
+                 <string>&lt;none&gt;</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>&lt;add new&gt;</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="2" column="0" colspan="2">
+              <widget class="QLabel" name="text_numbe">
+               <property name="text">
+                <string>number:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QLineEdit" name="lineEdit_number"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="groupBox_statistic_info">
+            <property name="font">
+             <font>
+              <weight>75</weight>
+              <italic>true</italic>
+              <bold>true</bold>
+              <underline>false</underline>
+              <strikeout>false</strikeout>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QGroupBox {
+	border-color: rgb(156, 156, 156);
+	border-width: 1px;
+	border-style: solid;
+	margin-top: 3ex;
+}
+QGroupBox::title {	
+	subcontrol-origin: margin;
+	subcontrol-position: top left;
+	left: 10px;
+	margin-left: 2 px;
+	padding: 0  0px;
+}</string>
+            </property>
+            <property name="title">
+             <string>statistic information:</string>
+            </property>
+            <property name="flat">
+             <bool>false</bool>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_2">
+             <item row="1" column="1" colspan="2">
+              <widget class="QLabel" name="label_speed">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0" colspan="2">
+              <widget class="QLabel" name="text_distance">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>distance traveled:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="text_speed">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>speed:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="label_distance">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QTabWidget" name="tabWidget_chart">
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <widget class="QWidget" name="tab_2">
+                <attribute name="title">
+                 <string>speed</string>
+                </attribute>
+                <layout class="QGridLayout" name="gridLayout_3">
+                 <item row="0" column="0">
+                  <widget class="QChartView" name="chartView_speed" native="true"/>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="tab_3">
+                <attribute name="title">
+                 <string>distance</string>
+                </attribute>
+                <layout class="QGridLayout" name="gridLayout_4">
+                 <item row="0" column="0">
+                  <widget class="QChartView" name="chartView_distance" native="true"/>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tab_modify">
+         <attribute name="title">
+          <string>Modification </string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <item>
+           <widget class="QGroupBox" name="groupBox_labelFile">
+            <property name="font">
+             <font>
+              <pointsize>9</pointsize>
+             </font>
+            </property>
+            <property name="title">
+             <string>label file</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_5">
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_4">
+               <item>
+                <widget class="QLabel" name="text_file_left">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>9</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>file for left:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="label_filename_left">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>9</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_7">
+               <item>
+                <widget class="QLabel" name="text_file_right">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>file for right:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="label_filename_right">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_generateInfo">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>8</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>TextLabel</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="1,1">
+               <item>
+                <widget class="QPushButton" name="pushButton_loadlabels">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>load</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pushButton_generatelabel">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>generate from</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBox_editLabel">
+            <property name="text">
+             <string>edit label</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="groupBox_editPenal">
+            <property name="title">
+             <string>edit penal</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_9">
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="1,1">
+               <item>
+                <widget class="QPushButton" name="pushButton_3">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>previous frame</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pushButton_4">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>next frame</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_saveLabelFile">
+               <property name="text">
+                <string>save</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="groupBox_labelList">
+               <property name="title">
+                <string>label list</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_7">
+                <item>
+                 <widget class="QTableView" name="tableView_labels"/>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="pushButton_addNewLabel">
+                  <property name="text">
+                   <string>add new label</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1280</width>
+     <height>26</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>DisplayLabel</class>
+   <extends>QLabel</extends>
+   <header>displayLabel.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QChartView</class>
+   <extends>QWidget</extends>
+   <header>qchartview.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
