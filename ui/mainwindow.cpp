@@ -43,16 +43,20 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableView_labels->setModel(itemModel_labels);
     ui->tableView_labels->setSelectionBehavior(QAbstractItemView::SelectRows);
     connect(itemModel_labels, &QAbstractItemModel::dataChanged, this, &MainWindow::change_label_id);
+
     // 处理视频中被选中的标记框发生变化
     connect(ui->video_label_left, &DisplayLabel::selectedLabelChanged, this, &MainWindow::selectedLabelChanged_left);
     connect(ui->video_label_right, &DisplayLabel::selectedLabelChanged, this, &MainWindow::selectedLabelChanged_right);
+    // 处理add模式
+    connect(ui->video_label_left, &DisplayLabel::addingDone, this, &MainWindow::addingDone);
+    connect(ui->video_label_right, &DisplayLabel::addingDone, this, &MainWindow::addingDone);
     // 处理id的变换情况，相应地变换combobox中的可选id;
     connect(ui->video_label_left, &DisplayLabel::idRemoved, this, &MainWindow::idRemoved);
     connect(ui->video_label_right, &DisplayLabel::idRemoved, this, &MainWindow::idRemoved);
     connect(ui->video_label_left, &DisplayLabel::idCreated, this, &MainWindow::idCreated);
     connect(ui->video_label_right, &DisplayLabel::idCreated, this, &MainWindow::idCreated);
     // 创建变量
-    players.resize(60);
+    players.resize(30);
     // 设置basicinfo模块，设置球衣号输入框只能输入数字
     ui->groupBox_basic_info->setDisabled(true);
     ui->lineEdit_number->setValidator(new QIntValidator(0,99,this));
@@ -69,6 +73,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 设置更新小图函数
     connect(ui->video_label_left, &DisplayLabel::boxPositionChanged, this, &MainWindow::playersPositionChanged_left);
     connect(ui->video_label_right, &DisplayLabel::boxPositionChanged, this, &MainWindow::playersPositionChanged_right);
+
     // 初始化绘图格式、字体
     pen_point.setColor(Qt::red);
     pen_point.setWidth(14);
@@ -83,13 +88,42 @@ MainWindow::MainWindow(QWidget *parent)
         pen_trace[i].setColor(color);
         pen_trace[i].setWidth(14*20/(40-i));
     }
-    // 初始化field2label
+    //根据线性渐变色条得到颜色表
+    QLinearGradient linear=QLinearGradient(QPoint(0,0),QPoint(255,0));
+    linear.setColorAt(0, Qt::blue);
+    linear.setColorAt(0.4, Qt::blue);
+    linear.setColorAt(0.5, Qt::cyan);
+    linear.setColorAt(0.6, Qt::green);
+    linear.setColorAt(0.8, Qt::yellow);
+    linear.setColorAt(0.95, Qt::red);
+    //把渐变色绘制到Img方便取颜色
+    QImage img(256,1,QImage::Format_ARGB32);
+    QPainter painter(&img);
+    painter.fillRect(img.rect(),linear);
+    //HeatAlpha为热力图整体透明度
+    for(int i=0;i<256;i++){
+        //根据热力图透明度来计算颜色表的透明度
+        //颜色+透明度
+        colors_heat[i] = img.pixel(i,0);
+        colors_heat[i].setAlpha(100/255.0*i);
+    }
+
+    // 初始化field2label，field2display, 热力图相关
     this->show();
-    field.load(":/pic/field.png");
-    QRect image_rect(0, 0, field.width(), field.height());
-    QRect label_rect(ui->picture_field->geometry().x(), ui->picture_field->geometry().y(), ui->picture_field->geometry().width(), ui->picture_field->geometry().height());
+    image_field.load(":/pic/field.png");
+    image_outline.load(":/pic/field_outline.png");
+    QRect image_rect(0, 0, image_field.width(), image_field.height());
     // qDebug() << label_rect.x() << ' ' << label_rect.y() << ' ' << label_rect.width() << ' ' << label_rect.height();
-    QTransform::quadToQuad(QPolygon(image_rect), QPolygon(label_rect), field2label);
+    QTransform::quadToQuad(QPolygon(image_rect), QPolygon(ui->picture_field->geometry()), field2label);
+    QRect rect_detail(0,0,ui->picture_detail->geometry().width(), ui->picture_detail->geometry().height());
+    QTransform::quadToQuad(QPolygon(image_rect), QPolygon(rect_detail), field2heat);
+    dataImg = QImage(rect_detail.width(), rect_detail.height(), QImage::Format_Alpha8);
+    heatImg = QImage(rect_detail.width(), rect_detail.height(), QImage::Format_ARGB32);
+    count_positions.resize(ui->picture_detail->geometry().height()*ui->picture_detail->geometry().width());
+    for (int i=0; i<count_positions.length(); ++i)
+        count_positions[i]=0;
+    heatMapWidth = ui->picture_detail->geometry().width();
+
     // 初始化折线图相关
     chart_distance = new QChart;
     chart_speed = new QChart;
@@ -397,19 +431,37 @@ void MainWindow::playersPositionChanged_left(QList<QPoint> positions, QList<int>
     positions_left = positions;
     ids_left = ids;
 
-    // 添加球员历史信息
+    //清空之前出现的信息
     QDateTime time = ui->video_label_left->video_time;
     int time_ms = time.toMSecsSinceEpoch();
-    for (int i=0; i<positions.length(); ++i) {
+    for (auto p : players) {
+        if (p.lastAppearwd_time_ms != time_ms)
+            p.lastAppeared_window = NULL;
+    }
 
+    // 添加球员历史信息
+    for (int i=0; i<positions.length(); ++i) {
         player_t* player = &players[ids[i]];
+        QPoint pos_field = video2png_left.map(positions[i]);
+        QPoint pos_detail = field2heat.map(pos_field);
         if (player->appearedTimes.contains(time))
-            continue;;
+            continue;
         int cnt = player->appearedTimes.size();
+        player->lastAppeared_window = ui->video_label_left;
+        player->lastAppeared_position = positions[i];
+        int k = pos_detail.y()*heatMapWidth+pos_detail.x();
+        if (k<0 || k>= count_positions.length()){
+            qDebug() << "x" << pos_detail.x() << "y" << pos_detail.y();
+        }
+        else{
+            if (++count_positions[k]>maxCount)
+                maxCount=count_positions[k];
+        }
+        player->lastAppearwd_time_ms = time_ms;
         player->appearedTimes.append(time);
         QPointF pos = video2standard_left.map(QPointF(positions[i]));
         player->positions.append(pos);
-        player->positions_label.append(video2png_left.map(positions[i]));
+        player->positions_label.append(pos_field);
         if (cnt == 0){
             player->series_speed = new QLineSeries;
             player->series_distance = new QLineSeries;
@@ -432,6 +484,7 @@ void MainWindow::playersPositionChanged_left(QList<QPoint> positions, QList<int>
     }
 
     updateChart();
+    updateHeat();
     update();
 }
 
@@ -440,19 +493,36 @@ void MainWindow::playersPositionChanged_right(QList<QPoint> positions, QList<int
     positions_right = positions;
     ids_right = ids;
 
-    // 添加球员历史信息
-    QDateTime time = ui->video_label_right->video_time;
+    //清空之前出现的信息
+    QDateTime time = ui->video_label_left->video_time;
     int time_ms = time.toMSecsSinceEpoch();
+    for (auto p : players) {
+        if (p.lastAppearwd_time_ms != time_ms)
+            p.lastAppeared_window = NULL;
+    }
+
+    // 添加球员历史信息
     // qDebug() << "right " << time_ms;
     for (int i=0; i<positions.length(); ++i) {
         player_t* player = &players[ids[i]];
+        QPoint pos_field = video2png_right.map(positions[i]);
+        QPoint pos_detail = field2heat.map(pos_field);
         if (player->appearedTimes.contains(time))
             continue;
+        int k = pos_detail.y()*heatMapWidth+pos_detail.x();
+        if (k<0 || k>= count_positions.length())
+            qDebug() << "x" << pos_detail.x() << "y" << pos_detail.y();
+        else
+            if (++count_positions[k]>maxCount)
+                maxCount=count_positions[k];
         int cnt = player->appearedTimes.size();
+        player->lastAppeared_window = ui->video_label_right;
+        player->lastAppeared_position = positions[i];
+        player->lastAppearwd_time_ms = time_ms;
         player->appearedTimes.append(time);
         QPointF pos = video2standard_right.map(QPointF(positions[i]));
         player->positions.append(pos);
-        player->positions_label.append(video2png_right.map(positions[i]));
+        player->positions_label.append(pos_field);
         if (cnt == 0){
             player->series_speed = new QLineSeries;
             player->series_distance = new QLineSeries;
@@ -474,6 +544,7 @@ void MainWindow::playersPositionChanged_right(QList<QPoint> positions, QList<int
             player->max_speed = speed;
     }
     updateChart();
+    updateHeat();
     update();
 }
 
@@ -484,7 +555,7 @@ void MainWindow::paintEvent(QPaintEvent *){
     painter.setTransform(field2label);
 
     // 更新缩略图
-    painter.drawImage(QPoint(0,0), field);
+    painter.drawImage(QPoint(0,0), image_field);
     painter.setFont(font_number);
     int radius = 7;
     for (int i=0; i<positions_left.length(); ++i){
@@ -504,19 +575,41 @@ void MainWindow::paintEvent(QPaintEvent *){
         painter.setPen(pen_number);
         painter.drawText(QPoint(pos.x()-8, pos.y()+8), QString::number(ids_right[i]));
     }
+
     //画轨迹图
-    if (ui->comboBox_id->currentText()=="<none>" || ui->comboBox_id->currentText()=="")
-        return;
     int id = ui->comboBox_id->currentText().toInt();
     player_t *player = &players[id];
     int time_now = ui->horizontalSlider->value()*1000/30;
-    for (int i=0; i<player->appearedTimes.length(); ++i){
-        int idx = player->appearedTimes[i].toMSecsSinceEpoch()*20/time_now;
-        if (idx==20)
-            break;
-        painter.setPen(pen_trace[idx]);
-        int r = pen_trace[idx].width()/2;
-        painter.drawEllipse(player->positions_label[i], r, r);
+    if (ui->comboBox_id->currentText()!="<none>" && ui->comboBox_id->currentText()!=""){
+        for (int i=0; i<player->appearedTimes.length(); ++i){
+            int idx = player->appearedTimes[i].toMSecsSinceEpoch()*20/time_now;
+            if (idx==20)
+                break;
+            painter.setPen(pen_trace[idx]);
+            int r = pen_trace[idx].width()/2;
+            painter.drawEllipse(player->positions_label[i], r, r);
+        }
+    }
+
+    if (ui->comboBox_detail->currentText() == "detail:"){
+    // 画细节放大图
+        painter.resetTransform();
+        if (player->lastAppearwd_time_ms == time_now){
+            if (player->lastAppeared_window == NULL)
+                return;
+            int box_width = ui->picture_detail->geometry().width();
+            int box_height = ui->picture_detail->geometry().height();
+            QImage cut = (player->lastAppeared_window->getImage()).copy(player->lastAppeared_position.x()-box_width/2,
+                                                                      player->lastAppeared_position.y()-box_height*4/5,
+                                                                      box_width, box_height);
+            painter.drawImage(ui->picture_detail->geometry(), cut);
+        }
+    }
+    else{
+        //画热力图
+        painter.resetTransform();
+        painter.drawImage(ui->picture_detail->geometry(), image_outline);
+        painter.drawImage(ui->picture_detail->geometry(), heatImg);
     }
 }
 
@@ -567,6 +660,37 @@ void MainWindow::updateChart(){
     }
 }
 
+void MainWindow::updateHeat(){
+    //更新热力图
+    int time_now = ui->horizontalSlider->value()*1000/30;
+    if (time_now%100==0){ //画慢点
+        dataImg.fill(Qt::transparent);
+        heatImg.fill(Qt::transparent);
+        //draw dataImg
+        QPainter painter2(&dataImg);
+        painter2.setPen(Qt::transparent);
+        int radius=5;
+        for (int i=0; i<ui->picture_detail->geometry().height(); ++i){
+            for(int j=0; j<heatMapWidth; ++j){
+                int k=i*heatMapWidth+j;
+                if(count_positions[k]==0)
+                    continue;
+                int alpha=count_positions[k]*255/maxCount;
+                QRadialGradient gradient(j,i,radius);
+                gradient.setColorAt(0,QColor(0,0,0,alpha));
+                gradient.setColorAt(1,QColor(0,0,0,0));
+                painter2.setBrush(gradient);
+                painter2.drawEllipse(QPointF(j,i),radius,radius);
+            }
+        }
+
+        //draw heatImg
+        for(int row=0;row<ui->picture_detail->geometry().height();row++)
+            for(int col=0;col<ui->picture_detail->geometry().width();col++)
+                heatImg.setPixelColor(col, row, colors_heat[dataImg.pixelColor(col, row).alpha()]);
+    }
+}
+
 void MainWindow::setVideoInfo(int video_frame_rate, QDateTime video_duration){
     // 设置图表坐标轴，及帧率
     frame_rate = video_frame_rate;
@@ -588,3 +712,17 @@ void MainWindow::setVideoInfo(int video_frame_rate, QDateTime video_duration){
     chart_distance->addAxis(axis_x_distance, Qt::AlignBottom);
     update();
 }
+
+void MainWindow::addingDone(){
+    ui->video_label_left->setMode(1); //切回EDITING
+    ui->video_label_right->setMode(1);
+    getLabels();
+}
+
+
+void MainWindow::on_pushButton_addNewLabel_clicked()
+{
+    ui->video_label_left->setMode(2); //切到ADDING
+    ui->video_label_right->setMode(2);
+}
+
