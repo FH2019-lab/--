@@ -1,3 +1,8 @@
+'''
+Created by by Adrian Rosebrock on November 12, 2018
+https://www.pyimagesearch.com/2018/11/12/yolo-object-detection-with-opencv/
+Modified by Femke Huang
+'''
 import numpy as np
 import imutils
 import time
