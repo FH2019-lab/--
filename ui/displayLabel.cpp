@@ -19,12 +19,14 @@ DisplayLabel::DisplayLabel(QWidget *){
     id_cnts.resize(30);
 }
 
-QList<int> DisplayLabel::LoadLabelFile(QString filename){
+QList<int> DisplayLabel::LoadLabelFile(QString filename, QList<int> &footballs){
     // 从文件中读取标签信息
-    // 每行格式：<frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, <conf>, <x>, <y>, <z>
+    // 每行格式：<frame>, <id>, <cls>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, <conf>, <x>, <y>, <z>
     // 其中frame从1开始计数
+    footballs.resize(id_cnts.length());
     for (int i=0; i< id_cnts.length(); i++) {
         id_cnts[i] = 0;
+        footballs[i]=0;
     }
     if (filename.isEmpty())
         return id_cnts;
@@ -46,12 +48,17 @@ QList<int> DisplayLabel::LoadLabelFile(QString filename){
             labels.clear();
         }
         box_t bbox;
-        bbox.rect.setRect(line_prt.at(2).toDouble(), line_prt.at(3).toDouble(), line_prt.at(4).toDouble(), line_prt.at(5).toDouble());
+        bbox.rect.setRect(line_prt.at(3).toDouble(), line_prt.at(4).toDouble(), line_prt.at(5).toDouble(), line_prt.at(6).toDouble());
         bbox.id = line_prt.at(1).toInt();
-        if (bbox.id >= id_cnts.length())
+        bbox.cls = line_prt.at(2).toInt();
+        if (bbox.id >= id_cnts.length()){
             id_cnts.resize(bbox.id + 10);
+            footballs.resize(bbox.id+10);
+        }
         if (bbox.id > -1)
             id_cnts[bbox.id]++;
+        if (bbox.cls == 1)
+            footballs[bbox.id]++;
         labels.append(bbox);
     }
     labels_list.append(labels);

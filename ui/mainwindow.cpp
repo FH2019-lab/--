@@ -84,6 +84,8 @@ MainWindow::MainWindow(QWidget *parent)
     pen_point.setWidth(14);
     pen_number.setColor(Qt::black);
     pen_number.setWidth(5);
+    pen_point_ball.setColor(Qt::black);
+    pen_point_ball.setWidth(10);
     font_number.setPointSize(16);
     font_number.setBold(true);
     font_number.setFamily("Microsoft YaHei");
@@ -231,7 +233,8 @@ void MainWindow::on_pushButton_loadlabels_clicked()
         players[i].valid=0;
     const QString fileName = QFileDialog::getOpenFileName(this, tr("Choose a label file for left video"), "", "*.txt");
     if (fileName.isEmpty()) return;
-    QList<int> cnts = ui->video_label_left->LoadLabelFile(fileName);
+    QList<int> isFootball;
+    QList<int> cnts = ui->video_label_left->LoadLabelFile(fileName, isFootball);
     ui->label_filename_left->setText(fileName);
     for (int i=0; i<cnts.length(); ++i)
         if (cnts[i]>0){
@@ -239,9 +242,12 @@ void MainWindow::on_pushButton_loadlabels_clicked()
                 players.resize(i*2+10);
             players[i*2].valid++;
         }
+    for (int i=0; i<isFootball.length(); ++i)
+        if (isFootball[i]>0)
+            players[i*2].is_football=true;
     const QString fileName_r = QFileDialog::getOpenFileName(this, tr("Choose a label file for right video"), "", "*.txt");
     if (fileName_r.isEmpty()) return;
-    cnts = ui->video_label_right->LoadLabelFile(fileName_r);
+    cnts = ui->video_label_right->LoadLabelFile(fileName_r, isFootball);
     ui->label_filename_right->setText(fileName_r);
     for (int i=0; i<cnts.length(); ++i)
         if (cnts[i]>0){
@@ -254,6 +260,9 @@ void MainWindow::on_pushButton_loadlabels_clicked()
     for (int i=0; i<players.length(); ++i)
         if(players[i].valid>0)
             player_list.append(QString::number(i));
+    for (int i=0; i<isFootball.length(); ++i)
+        if (isFootball[i]>0)
+            players[i*2+1].is_football=true;
     ui->comboBox_id->addItems(player_list);
     mergeDialog->setPlayerList(player_list);
     ui->checkBox_editLabel->setEnabled(true);
@@ -266,24 +275,44 @@ void MainWindow::getLabels(){
      */
     itemModel_labels->clear();
     //恢复表头
-    QStringList headers = {"id", "left/right"};
+    QStringList headers = {"id", "left/right", "name", "team", "number"};
     itemModel_labels->setHorizontalHeaderLabels(headers);
 
     QList<box_t> labels = ui->video_label_left->getLabels();
     cnt_labels_left = labels.length();
     for (auto l:labels){
         QList<QStandardItem*> row;
-        row.append(new QStandardItem(QString::number(l.id)));
+        int id = l.id*2;
+        row.append(new QStandardItem(QString::number(id)));
         QStandardItem* item = new QStandardItem("left");
         item -> setFlags(Qt::NoItemFlags); //设置只读
+        row.append(item);
+        item = new QStandardItem(players[id].name);
+        item -> setFlags(Qt::NoItemFlags);
+        row.append(item);
+        item = new QStandardItem(players[id].team);
+        item -> setFlags(Qt::NoItemFlags);
+        row.append(item);
+        item = new QStandardItem(QString::number(players[id].number));
+        item -> setFlags(Qt::NoItemFlags);
         row.append(item);
         itemModel_labels->appendRow(row);
     }
     labels = ui->video_label_right->getLabels();
     for (auto l:labels){
         QList<QStandardItem*> row;
-        row.append(new QStandardItem(QString::number(l.id)));
+        int id = l.id*2+1;
+        row.append(new QStandardItem(QString::number(id)));
         QStandardItem* item = new QStandardItem("right");
+        item -> setFlags(Qt::NoItemFlags);
+        row.append(item);
+        item = new QStandardItem(players[id].name);
+        item -> setFlags(Qt::NoItemFlags);
+        row.append(item);
+        item = new QStandardItem(players[id].team);
+        item -> setFlags(Qt::NoItemFlags);
+        row.append(item);
+        item = new QStandardItem(QString::number(players[id].number));
         item -> setFlags(Qt::NoItemFlags);
         row.append(item);
         itemModel_labels->appendRow(row);
@@ -607,14 +636,20 @@ void MainWindow::paintEvent(QPaintEvent *){
         // QPoint pos_real = field2label.map(pos);
         // qDebug() << "origin pos:" << positions_left[i].x() << ' ' << positions_right[i].y() << "position in field:" << pos.x() << pos.y()
         //         << " real position:" << pos_real.x() <<' ' << pos_real.y();
-        painter.setPen(pen_point);
+        if (!players[ids_left[i]].is_football)
+            painter.setPen(pen_point);
+        else
+            painter.setPen(pen_point_ball);
         painter.drawEllipse(pos, radius, radius);
         painter.setPen(pen_number);
         painter.drawText(QPoint(pos.x()-8, pos.y()+8), QString::number(ids_left[i]));
     }
     for (int i=0; i<positions_right.length(); ++i){
         QPoint pos = video2png_right.map(positions_right[i]);
-        painter.setPen(pen_point);
+        if (!players[ids_right[i]].is_football)
+            painter.setPen(pen_point);
+        else
+            painter.setPen(pen_point_ball);
         painter.drawEllipse(pos, radius, radius);
         painter.setPen(pen_number);
         painter.drawText(QPoint(pos.x()-8, pos.y()+8), QString::number(ids_right[i]));
@@ -866,7 +901,6 @@ void MainWindow::on_pushButton_generatelabel_clicked()
 //    p.start(command);
 //    p.waitForFinished();
 }
-
 
 void MainWindow::on_pushButton_merge_clicked()
 {
