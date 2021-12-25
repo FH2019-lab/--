@@ -11,7 +11,14 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>football analyzer</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="pic.qrc">
+    <normaloff>:/pic/ball_icon.jfif</normaloff>:/pic/ball_icon.jfif</iconset>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -223,7 +230,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="tab">
          <attribute name="title">
@@ -286,47 +293,83 @@ QGroupBox::title {
             <property name="checkable">
              <bool>false</bool>
             </property>
-            <layout class="QGridLayout" name="gridLayout">
-             <item row="0" column="0">
-              <widget class="QLabel" name="text_name">
-               <property name="text">
-                <string>name:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1" colspan="2">
-              <widget class="QLineEdit" name="lineEdit_name"/>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="text_team">
-               <property name="text">
-                <string>team:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="2">
-              <widget class="QComboBox" name="comboBox_team">
+            <layout class="QVBoxLayout" name="verticalLayout_11">
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="1,2">
                <item>
-                <property name="text">
-                 <string>&lt;none&gt;</string>
-                </property>
+                <widget class="QLabel" name="text_name">
+                 <property name="text">
+                  <string>name:</string>
+                 </property>
+                </widget>
                </item>
                <item>
-                <property name="text">
-                 <string>&lt;add new&gt;</string>
-                </property>
+                <widget class="QLineEdit" name="lineEdit_name"/>
                </item>
-              </widget>
+              </layout>
              </item>
-             <item row="2" column="0" colspan="2">
-              <widget class="QLabel" name="text_numbe">
-               <property name="text">
-                <string>number:</string>
-               </property>
-              </widget>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="1,2">
+               <item>
+                <widget class="QLabel" name="text_team">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>team:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QComboBox" name="comboBox_team">
+                 <item>
+                  <property name="text">
+                   <string>&lt;none&gt;</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>&lt;add new&gt;</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+              </layout>
              </item>
-             <item row="2" column="2">
-              <widget class="QLineEdit" name="lineEdit_number"/>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="1,2">
+               <item>
+                <widget class="QLabel" name="text_numbe">
+                 <property name="text">
+                  <string>number:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="lineEdit_number"/>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_11">
+               <item>
+                <widget class="QPushButton" name="pushButton_2">
+                 <property name="text">
+                  <string>delete id</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pushButton_merge">
+                 <property name="text">
+                  <string>merge with ...</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
             </layout>
            </widget>
@@ -363,15 +406,8 @@ QGroupBox::title {
             <property name="flat">
              <bool>false</bool>
             </property>
-            <layout class="QGridLayout" name="gridLayout_2">
-             <item row="1" column="1" colspan="2">
-              <widget class="QLabel" name="label_speed">
-               <property name="text">
-                <string/>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="0" colspan="2">
+            <layout class="QVBoxLayout" name="verticalLayout_12">
+             <item>
               <widget class="QLabel" name="text_distance">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -384,7 +420,7 @@ QGroupBox::title {
                </property>
               </widget>
              </item>
-             <item row="1" column="0">
+             <item>
               <widget class="QLabel" name="text_speed">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -393,19 +429,31 @@ QGroupBox::title {
                 </sizepolicy>
                </property>
                <property name="text">
-                <string>speed:</string>
+                <string>speed (instant):</string>
                </property>
               </widget>
              </item>
-             <item row="0" column="2">
-              <widget class="QLabel" name="label_distance">
+             <item>
+              <widget class="QLabel" name="text_speed_more">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Ignored" vsizetype="Maximum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
-                <string/>
+                <string>speed (max/avg):</string>
                </property>
               </widget>
              </item>
-             <item row="2" column="0">
+             <item>
               <widget class="QTabWidget" name="tabWidget_chart">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="currentIndex">
                 <number>0</number>
                </property>
@@ -415,7 +463,14 @@ QGroupBox::title {
                 </attribute>
                 <layout class="QGridLayout" name="gridLayout_3">
                  <item row="0" column="0">
-                  <widget class="QChartView" name="chartView_speed" native="true"/>
+                  <widget class="QChartView" name="chartView_speed" native="true">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -429,6 +484,13 @@ QGroupBox::title {
                  </item>
                 </layout>
                </widget>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_comparation">
+               <property name="text">
+                <string>comparations</string>
+               </property>
               </widget>
              </item>
             </layout>
@@ -521,24 +583,6 @@ QGroupBox::title {
                 </widget>
                </item>
               </layout>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_generateInfo">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="font">
-                <font>
-                 <pointsize>8</pointsize>
-                </font>
-               </property>
-               <property name="text">
-                <string>TextLabel</string>
-               </property>
-              </widget>
              </item>
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="1,1">
@@ -678,6 +722,8 @@ QGroupBox::title {
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="pic.qrc"/>
+ </resources>
  <connections/>
 </ui>

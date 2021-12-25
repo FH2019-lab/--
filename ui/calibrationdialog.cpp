@@ -10,7 +10,7 @@ CalibrationDialog::CalibrationDialog(QWidget *parent) :
     setFixedSize(this->width(), this->height());
     field_outline.load(":/pic/field_outline.png");
     // qDebug() << field_outline.width() << ' ' << field_outline.height();
-    field_polygon = QPolygon(QRect(20,10, ui->label->geometry().width()-40, ui->label->geometry().height()-20));
+    field_polygon = QPolygon(QRect(80,150, ui->label->geometry().width()-40, ui->label->geometry().height()-100));
     field_rect = QPolygon(QRect(field_horizon_padding, field_vertical_padding, field_outline.width()-106, field_outline.height()-42));
     QTransform::quadToQuad(field_rect, field_polygon, field2label);
 
@@ -57,6 +57,17 @@ void CalibrationDialog::setImg(QImage img, int pos){
     QTransform::quadToQuad(img_polygon, canvas_polygon, img2label);
     QTransform::quadToQuad(canvas_polygon, img_polygon, label2img);
     // todo:添加自动识别函数
+
+    //重设变换
+    if (half == 0){
+        field_polygon = QPolygon(QRect(80,180, ui->label->geometry().width()/2-20, ui->label->geometry().height()-160));
+        field_rect = QPolygon(QRect(field_horizon_padding, field_vertical_padding, field_outline.width()/2-field_horizon_padding, field_outline.height()-field_vertical_padding*2));
+    }
+    else{
+        field_polygon = QPolygon(QRect(ui->label->geometry().x()+ui->label->geometry().width()/2,180, ui->label->geometry().width()/2-20, ui->label->geometry().height()-160));
+        field_rect = QPolygon(QRect(field_outline.width()/2, field_vertical_padding, field_outline.width()/2-field_horizon_padding, field_outline.height()-field_vertical_padding*2));
+    }
+    QTransform::quadToQuad(field_rect, field_polygon, field2label);
     update();
 }
 

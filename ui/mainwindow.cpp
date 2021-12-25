@@ -14,7 +14,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setFixedSize(this->width(), this->height());
-
     connect(ui->pushButton_load, &QAbstractButton::clicked, this, &MainWindow::loadVideo);
     //set slider, connect with video position
     connect(ui->horizontalSlider, &QAbstractSlider::sliderMoved, ui->video_label_left, &DisplayLabel::setVideoPostion);
@@ -44,6 +43,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->tableView_labels->setSelectionBehavior(QAbstractItemView::SelectRows);
     connect(itemModel_labels, &QAbstractItemModel::dataChanged, this, &MainWindow::change_label_id);
 
+    //处理视频播放窗口
+    ui->video_label_left->offset = 0;
+    ui->video_label_right->offset = 1;
     // 处理视频中被选中的标记框发生变化
     connect(ui->video_label_left, &DisplayLabel::selectedLabelChanged, this, &MainWindow::selectedLabelChanged_left);
     connect(ui->video_label_right, &DisplayLabel::selectedLabelChanged, this, &MainWindow::selectedLabelChanged_right);
@@ -55,6 +57,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->video_label_right, &DisplayLabel::idRemoved, this, &MainWindow::idRemoved);
     connect(ui->video_label_left, &DisplayLabel::idCreated, this, &MainWindow::idCreated);
     connect(ui->video_label_right, &DisplayLabel::idCreated, this, &MainWindow::idCreated);
+
     // 创建变量
     players.resize(30);
     // 设置basicinfo模块，设置球衣号输入框只能输入数字
@@ -63,6 +66,8 @@ MainWindow::MainWindow(QWidget *parent)
     // 设置按钮图标
     ui->pushButton_3->setIcon(style()->standardIcon(QStyle::SP_ArrowLeft));
     ui->pushButton_4->setIcon(style()->standardIcon(QStyle::SP_ArrowRight));
+    ui->pushButton_2->setIcon(style()->standardIcon(QStyle::SP_DialogCancelButton));
+    ui->pushButton_merge->setIcon(style()->standardIcon(QStyle::SP_BrowserReload));
     ui->pushButton_saveLabelFile->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
     // 设置添加队伍窗口
     teamDialog = new AddTeamDialog();
@@ -82,9 +87,9 @@ MainWindow::MainWindow(QWidget *parent)
     font_number.setPointSize(16);
     font_number.setBold(true);
     font_number.setFamily("Microsoft YaHei");
-    QColor color(Qt::red);
+    QColor color(Qt::darkRed);
     for (int i=0; i<20; ++i){
-        color.setAlpha(5*i);
+        color.setAlpha(4*i);
         pen_trace[i].setColor(color);
         pen_trace[i].setWidth(14*20/(40-i));
     }
@@ -137,6 +142,14 @@ MainWindow::MainWindow(QWidget *parent)
     axis_y_distance->setTickCount(5);
     axis_y_distance->setTitleText("distance");
     chart_distance->addAxis(axis_y_distance, Qt::AlignLeft);
+
+    //设置融合窗口
+    mergeDialog = new MergeDialog;
+    connect(mergeDialog, &MergeDialog::getInfo, this, &MainWindow::getPlayerInfo);
+
+    // 设置画柱状图窗口
+    barChartDialog = new BarChartDialog;
+    connect(barChartDialog, &BarChartDialog::getPlayersInfo, this, &MainWindow::getPlayersInfo);
 }
 
 MainWindow::~MainWindow()
@@ -221,18 +234,28 @@ void MainWindow::on_pushButton_loadlabels_clicked()
     QList<int> cnts = ui->video_label_left->LoadLabelFile(fileName);
     ui->label_filename_left->setText(fileName);
     for (int i=0; i<cnts.length(); ++i)
-        if (cnts[i]>0)
-            players[i].valid++;
+        if (cnts[i]>0){
+            if (players.length()<=i*2)
+                players.resize(i*2+10);
+            players[i*2].valid++;
+        }
     const QString fileName_r = QFileDialog::getOpenFileName(this, tr("Choose a label file for right video"), "", "*.txt");
     if (fileName_r.isEmpty()) return;
     cnts = ui->video_label_right->LoadLabelFile(fileName_r);
     ui->label_filename_right->setText(fileName_r);
     for (int i=0; i<cnts.length(); ++i)
-        if (cnts[i]>0)
-            players[i].valid++;
+        if (cnts[i]>0){
+            if (players.length()<2*2+2)
+                players.resize(i*2+10);
+            players[i*2+1].valid++;
+        }
+
+    QStringList player_list;
     for (int i=0; i<players.length(); ++i)
         if(players[i].valid>0)
-            ui->comboBox_id->addItem(QString::number(i));
+            player_list.append(QString::number(i));
+    ui->comboBox_id->addItems(player_list);
+    mergeDialog->setPlayerList(player_list);
     ui->checkBox_editLabel->setEnabled(true);
 }
 
@@ -281,7 +304,6 @@ void MainWindow::on_tableView_labels_clicked(const QModelIndex &index)
         ui->video_label_right->setSelectedLabel(index.row()-cnt_labels_left);
     }
 }
-
 
 
 void MainWindow::on_pushButton_3_clicked()
@@ -363,13 +385,10 @@ void MainWindow::on_lineEdit_name_textEdited(const QString &arg1)
     players[ui->comboBox_id->currentText().toInt()].name = arg1;
 }
 
-
-
 void MainWindow::on_lineEdit_number_textEdited(const QString &arg1)
 {
     players[ui->comboBox_id->currentText().toInt()].number = arg1.toInt();
 }
-
 
 void MainWindow::on_comboBox_id_currentTextChanged(const QString &arg1)
 {
@@ -393,7 +412,6 @@ void MainWindow::on_comboBox_id_currentTextChanged(const QString &arg1)
     updateChart();
     update();
 }
-
 
 void MainWindow::on_comboBox_team_currentTextChanged(const QString &arg1)
 {
@@ -429,13 +447,16 @@ void MainWindow::playersPositionChanged_left(QList<QPoint> positions, QList<int>
     // 这个函数与下面一个right的对称，记得同步修改！！！！！
     // 传递参数留给paintevevt处理
     positions_left = positions;
+    for (int i=0; i<ids.length(); ++i) {
+        ids[i] = ids[i]*2;
+    }
     ids_left = ids;
 
     //清空之前出现的信息
     QDateTime time = ui->video_label_left->video_time;
     int time_ms = time.toMSecsSinceEpoch();
     for (auto p : players) {
-        if (p.lastAppearwd_time_ms != time_ms)
+        if (p.lastAppeared_time_ms != time_ms)
             p.lastAppeared_window = NULL;
     }
 
@@ -457,7 +478,7 @@ void MainWindow::playersPositionChanged_left(QList<QPoint> positions, QList<int>
             if (++count_positions[k]>maxCount)
                 maxCount=count_positions[k];
         }
-        player->lastAppearwd_time_ms = time_ms;
+        player->lastAppeared_time_ms = time_ms;
         player->appearedTimes.append(time);
         QPointF pos = video2standard_left.map(QPointF(positions[i]));
         player->positions.append(pos);
@@ -467,6 +488,8 @@ void MainWindow::playersPositionChanged_left(QList<QPoint> positions, QList<int>
             player->series_distance = new QLineSeries;
             player->series_speed->append(time_ms, 0);
             player->series_distance->append(time_ms, 0);
+            player->pic = ui->video_label_left->getPortrait(ids[i]/2);
+            player->firstAppeared_time_ms = time_ms;
             continue;
         }
         qreal distance, distance_old;
@@ -491,13 +514,16 @@ void MainWindow::playersPositionChanged_left(QList<QPoint> positions, QList<int>
 void MainWindow::playersPositionChanged_right(QList<QPoint> positions, QList<int> ids){
     // 这个函数与上面一个left的对称，记得同步修改！！！！！
     positions_right = positions;
+    for (int i=0; i<ids.length(); ++i) {
+        ids[i] = ids[i]*2+1;
+    }
     ids_right = ids;
 
     //清空之前出现的信息
     QDateTime time = ui->video_label_left->video_time;
     int time_ms = time.toMSecsSinceEpoch();
     for (auto p : players) {
-        if (p.lastAppearwd_time_ms != time_ms)
+        if (p.lastAppeared_time_ms != time_ms)
             p.lastAppeared_window = NULL;
     }
 
@@ -518,7 +544,7 @@ void MainWindow::playersPositionChanged_right(QList<QPoint> positions, QList<int
         int cnt = player->appearedTimes.size();
         player->lastAppeared_window = ui->video_label_right;
         player->lastAppeared_position = positions[i];
-        player->lastAppearwd_time_ms = time_ms;
+        player->lastAppeared_time_ms = time_ms;
         player->appearedTimes.append(time);
         QPointF pos = video2standard_right.map(QPointF(positions[i]));
         player->positions.append(pos);
@@ -528,11 +554,13 @@ void MainWindow::playersPositionChanged_right(QList<QPoint> positions, QList<int
             player->series_distance = new QLineSeries;
             player->series_speed->append(time_ms, 0);
             player->series_distance->append(time_ms, 0);
+            player->pic = ui->video_label_right->getPortrait(ids[i]/2);
+            player->firstAppeared_time_ms = time_ms;
             continue;
         }
         qreal distance, distance_old;
-        if (cnt > 5)
-            distance = QLineF(player->positions[cnt-5], pos).length()/5;
+        if (cnt > 20)
+            distance = QLineF(player->positions[cnt-20], pos).length()/20;
         else
             distance = QLineF(player->positions[0], pos).length()/cnt;
         distance_old = (player -> series_distance->at(cnt-1)).y();
@@ -548,8 +576,6 @@ void MainWindow::playersPositionChanged_right(QList<QPoint> positions, QList<int
     update();
 }
 
-
-
 void MainWindow::paintEvent(QPaintEvent *){
     QPainter painter(this);
     painter.setTransform(field2label);
@@ -557,6 +583,24 @@ void MainWindow::paintEvent(QPaintEvent *){
     // 更新缩略图
     painter.drawImage(QPoint(0,0), image_field);
     painter.setFont(font_number);
+
+
+    //画轨迹图
+    int id = ui->comboBox_id->currentText().toInt();
+    player_t *player = &players[id];
+    int time_now = ui->horizontalSlider->value()*1000/30;
+    if (ui->comboBox_id->currentText()!="<none>" && ui->comboBox_id->currentText()!=""){
+        for (int i=0; i<player->appearedTimes.length(); ++i){
+            int idx = player->appearedTimes[i].toMSecsSinceEpoch()*20/time_now;
+            if (idx==20)
+                break;
+            painter.setPen(pen_trace[idx]);
+            int r = pen_trace[idx].width()/2;
+            painter.drawEllipse(player->positions_label[i], r, r);
+        }
+    }
+
+    //画点
     int radius = 7;
     for (int i=0; i<positions_left.length(); ++i){
         QPoint pos = video2png_left.map(positions_left[i]);
@@ -576,25 +620,10 @@ void MainWindow::paintEvent(QPaintEvent *){
         painter.drawText(QPoint(pos.x()-8, pos.y()+8), QString::number(ids_right[i]));
     }
 
-    //画轨迹图
-    int id = ui->comboBox_id->currentText().toInt();
-    player_t *player = &players[id];
-    int time_now = ui->horizontalSlider->value()*1000/30;
-    if (ui->comboBox_id->currentText()!="<none>" && ui->comboBox_id->currentText()!=""){
-        for (int i=0; i<player->appearedTimes.length(); ++i){
-            int idx = player->appearedTimes[i].toMSecsSinceEpoch()*20/time_now;
-            if (idx==20)
-                break;
-            painter.setPen(pen_trace[idx]);
-            int r = pen_trace[idx].width()/2;
-            painter.drawEllipse(player->positions_label[i], r, r);
-        }
-    }
-
     if (ui->comboBox_detail->currentText() == "detail:"){
     // 画细节放大图
         painter.resetTransform();
-        if (player->lastAppearwd_time_ms == time_now){
+        if (player->lastAppeared_time_ms == time_now){
             if (player->lastAppeared_window == NULL)
                 return;
             int box_width = ui->picture_detail->geometry().width();
@@ -613,7 +642,6 @@ void MainWindow::paintEvent(QPaintEvent *){
     }
 }
 
-
 void MainWindow::updateChart(){
     if (ui->tabWidget->currentIndex()!=0)
         return;
@@ -625,8 +653,12 @@ void MainWindow::updateChart(){
     int len = players[id].positions.length();
     if (len==0)
         return;
-    ui->text_speed->setText("speed: "+QString::number(players[id].series_speed->at(len-1).y()));
-    ui->text_distance->setText("distance travelled: "+QString::number(players[id].series_distance->at(len-1).y()));
+    ui->text_speed->setText("speed(instant): "+QString::number(players[id].series_speed->at(len-1).y(), 'f', 2)+"m/s");
+    qreal distance = players[id].series_distance->at(len-1).y();
+    ui->text_distance->setText("distance travelled: "+QString::number(distance) + "m");
+    ui->text_speed_more->setText("speed(avg, max)"
+                                 +QString::number(distance*1000./(players[id].lastAppeared_time_ms - players[id].firstAppeared_time_ms), 'f', 2)
+                                 +","+QString::number(players[id].max_speed, 'f', 2));
     // 更新图表
     if (ui->tabWidget_chart->currentIndex() == 0){ //speed
         auto series = chart_speed->series();
@@ -662,6 +694,8 @@ void MainWindow::updateChart(){
 
 void MainWindow::updateHeat(){
     //更新热力图
+    if (ui->comboBox_detail->currentText()!="heatmap:")
+        return;
     int time_now = ui->horizontalSlider->value()*1000/30;
     if (time_now%100==0){ //画慢点
         dataImg.fill(Qt::transparent);
@@ -689,6 +723,102 @@ void MainWindow::updateHeat(){
             for(int col=0;col<ui->picture_detail->geometry().width();col++)
                 heatImg.setPixelColor(col, row, colors_heat[dataImg.pixelColor(col, row).alpha()]);
     }
+}
+
+int MainWindow::mergeId(int id1, int id2){
+    // 融合到id2
+    int id_new = (id1<id2)? id1:id2;
+    if (id1%2 != id2%2)
+        players[id_new].valid = 2;
+    if (id_new == id1)
+        players[id2].valid=0;
+    else
+        players[id1].valid=0;
+    if (players[id1].name!="" && players[id2].name=="")
+        players[id_new].name = players[id1].name;
+    else
+        players[id_new].name = players[id2].name;
+    if (players[id1].team!="" && players[id2].team=="")
+        players[id_new].team = players[id1].team;
+    else
+        players[id_new].team = players[id2].team;
+    if (players[id1].number!=-1 && players[id2].number==-1)
+        players[id_new].number = players[id1].number;
+    else
+        players[id_new].number = players[id2].number;
+
+    if (players[id1].lastAppeared_time_ms > players[id2].lastAppeared_time_ms){
+        players[id_new].lastAppeared_window = players[id1].lastAppeared_window;
+        players[id_new].lastAppeared_position = players[id1].lastAppeared_position;
+        players[id_new].lastAppeared_time_ms = players[id1].lastAppeared_time_ms;
+    }
+    else{
+        players[id_new].lastAppeared_window = players[id2].lastAppeared_window;
+        players[id_new].lastAppeared_position = players[id2].lastAppeared_position;
+        players[id_new].lastAppeared_time_ms = players[id2].lastAppeared_time_ms;
+    }
+    players[id_new].max_distance = std::max(players[id1].max_distance, players[id2].max_distance);
+    players[id_new].max_speed = std::max(players[id2].max_speed, players[id2].max_speed);
+
+
+    QLineSeries *series_s1=players[id1].series_speed, *series_s2=players[id2].series_speed,
+            *series_d1=players[id1].series_distance, *series_d2=players[id2].series_distance;
+    QLineSeries *series_s_new, *series_d_new;
+    series_s_new = new QLineSeries;
+    series_d_new = new QLineSeries;
+    QList<QPointF> positions, positions_label;
+    QList<QDateTime> appeared_times;
+    int i=0, j=0;
+    while (i<players[id1].appearedTimes.length() && j<players[id2].appearedTimes.length()){
+        qDebug() << "i" <<i << "j" << j;
+        if (players[id1].appearedTimes[i] < players[id2].appearedTimes[j]){
+            series_s_new->append(series_s1->at(i));
+            series_d_new->append(series_d1->at(i));
+            positions.append(players[id1].positions[i]);
+            positions_label.append(players[id1].positions_label[i]);
+            appeared_times.append(players[id1].appearedTimes[i]);
+            i++;
+        }
+        else{
+            series_s_new->append(series_s2->at(j));
+            series_d_new->append(series_d2->at(j));
+            positions.append(players[id2].positions[j]);
+            positions_label.append(players[id2].positions_label[j]);
+            appeared_times.append(players[id2].appearedTimes[j]);
+            if (players[id1].appearedTimes[i] == players[id2].appearedTimes[j])
+                i++;
+            j++;
+        }
+    }
+    while (i<players[id1].appearedTimes.length()){
+        series_s_new->append(series_s1->at(i));
+        series_d_new->append(series_d1->at(i));
+        positions.append(players[id1].positions[i]);
+        positions_label.append(players[id1].positions_label[i]);
+        appeared_times.append(players[id1].appearedTimes[i]);
+        i++;
+    }
+    while (j< players[id2].appearedTimes.length()){
+        series_s_new->append(series_s2->at(j));
+        series_d_new->append(series_d2->at(j));
+        positions.append(players[id2].positions[j]);
+        positions_label.append(players[id2].positions_label[j]);
+        appeared_times.append(players[id2].appearedTimes[j]);
+        j++;
+    }
+    players[id_new].positions = positions;
+    players[id_new].positions_label = positions_label;
+    players[id_new].appearedTimes = appeared_times;
+    players[id_new].series_speed = series_s_new;
+    players[id_new].series_distance = series_d_new;
+    QLineSeries* series_list[4] = {series_s1, series_s2, series_d1, series_d2};
+    for (auto s: series_list){
+        if (s!=NULL){
+            delete s;
+            s=NULL;
+        }
+    }
+    return id_new;
 }
 
 void MainWindow::setVideoInfo(int video_frame_rate, QDateTime video_duration){
@@ -724,5 +854,72 @@ void MainWindow::on_pushButton_addNewLabel_clicked()
 {
     ui->video_label_left->setMode(2); //切到ADDING
     ui->video_label_right->setMode(2);
+}
+
+
+void MainWindow::on_pushButton_generatelabel_clicked()
+{
+
+//    QProcess p(NULL);
+//    p.setWorkingDirectory("D:/GoodGoodStudyDayDayUp/DaSanShang/DigitalImagePropressing/Project/learn/Yolov5_DeepSort_Pytorch");
+//    QString command = "D:/GoodGoodStudyDayDayUp/DaSanShang/DigitalImagePropressing/Project/learn/Yolov5_DeepSort_Pytorch/run.bat";
+//    p.start(command);
+//    p.waitForFinished();
+}
+
+
+void MainWindow::on_pushButton_merge_clicked()
+{
+    int idx1 = ui->comboBox_id->currentText().toInt();
+    int idx2 = mergeDialog->exec();
+    int id_new = mergeId(idx1, idx2);
+    qDebug() <<"id2" << idx2 << "id new" << id_new;
+    if (id_new!=idx1){
+        ui->comboBox_id->setCurrentText(QString::number(id_new));
+    }
+    updateChart();
+    update();
+}
+
+void MainWindow::getPlayerInfo(int idx, QString &name, QString &team, QString &number, QImage &pic){
+    name = players[idx].name;
+    team = players[idx].team;
+    number = QString::number(players[idx].number);
+    pic = players[idx].pic;
+}
+
+void MainWindow::getPlayersInfo(QString type, QList<int>& id, QList<qreal>& data){
+    /* 获得运动员们的信息
+     * type可以是MaxSped, AvgSpeed, Distance
+     */
+    if (type == "MaxSpeed"){
+        for (int i=0; i<players.length(); ++i)
+            if (players[i].valid > 0){
+                id.append(i);
+                data.append(players[i].max_speed);
+            }
+        return;
+    }
+    if (type == "AvgSpeed"){
+        for (int i=0; i<players.length(); ++i)
+            if (players[i].valid > 0){
+                id.append(i);
+                data.append(players[i].max_distance*1000./(players[i].lastAppeared_time_ms - players[i].firstAppeared_time_ms));
+            }
+        return;
+    }
+    if (type == "Distance"){
+        for (int i=0; i<players.length(); ++i)
+            if (players[i].valid > 0){
+                id.append(i);
+                data.append(players[i].max_distance);
+            }
+        return;
+    }
+}
+
+void MainWindow::on_pushButton_comparation_clicked()
+{
+    barChartDialog->exec();
 }
 

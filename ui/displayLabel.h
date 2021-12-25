@@ -32,8 +32,10 @@ public:
     void setSelectedLabel(int);
     void getSelectedItem(QPoint, int&, int&);
     QImage getImage();
+    QImage getPortrait(int idx);
 
     QDateTime video_time;
+    int multiple = 2, offset=1;//一共几个这样的窗口
 
 
 protected:
@@ -93,6 +95,7 @@ private:
     QPen pen_box_chosen;
     QPen pen_points;
     QPen pen_text;
+    QFont font_text;
 };
 
 #endif // DISPLAYLABEL_H

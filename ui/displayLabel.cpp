@@ -10,8 +10,9 @@ DisplayLabel::DisplayLabel(QWidget *){
     pen_box_chosen.setColor(Qt::green);
     pen_points.setWidth(8);
     pen_points.setColor(Qt::green);
-    pen_text.setWidth(2);
-    pen_text.setColor(Qt::red);
+    font_text.setPointSize(16);
+    font_text.setBold(true);
+    font_text.setFamily("Microsoft YaHei");
     // 跟踪鼠标
     this->setMouseTracking(true);
     // 初始化数组
@@ -47,9 +48,10 @@ QList<int> DisplayLabel::LoadLabelFile(QString filename){
         box_t bbox;
         bbox.rect.setRect(line_prt.at(2).toDouble(), line_prt.at(3).toDouble(), line_prt.at(4).toDouble(), line_prt.at(5).toDouble());
         bbox.id = line_prt.at(1).toInt();
-        if (bbox.id > -1 && bbox.id < id_cnts.length())
+        if (bbox.id >= id_cnts.length())
+            id_cnts.resize(bbox.id + 10);
+        if (bbox.id > -1)
             id_cnts[bbox.id]++;
-        //todo::扩大列表的大小再赋值
         labels.append(bbox);
     }
     labels_list.append(labels);
@@ -220,6 +222,7 @@ void DisplayLabel::paintEvent(QPaintEvent *){
     //绘制视频帧
     QPainter painter(this);
     painter.setTransform(frame2label);
+    painter.setFont(font_text);
     QImage img = QImage((const uchar*)videoFrame.data, videoFrame.cols, videoFrame.rows, videoFrame.step, QImage::Format_RGB888);
     painter.drawImage(QPoint(0,0), img);
 
@@ -241,6 +244,7 @@ void DisplayLabel::paintEvent(QPaintEvent *){
         else
             painter.setPen(pen_box);
         painter.drawRect(bbox->rect);
+        painter.drawText(bbox->rect.left()+8, bbox->rect.top()-8, QString::number(bbox->id*multiple+offset));
         bbox++;
     }
 
@@ -364,4 +368,15 @@ void DisplayLabel::mouseReleaseEvent(QMouseEvent *){
         break;
     }
 
+}
+
+QImage DisplayLabel::getPortrait(int idx){
+    QRectF rect;
+    for (auto b: labels_list[frameidx]) {
+        if (b.id == idx)
+            rect = b.rect;
+    }
+    QImage img_frame = QImage((const uchar*)videoFrame.data, videoFrame.cols, videoFrame.rows, videoFrame.step, QImage::Format_RGB888);
+    QImage img = img_frame.copy(int(rect.x()), int(rect.y()), int(rect.width()), int(rect.height()));
+    return img;
 }
