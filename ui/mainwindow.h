@@ -16,6 +16,8 @@
 #include <QtCharts>
 #include <QDateTimeAxis>
 #include <QLineF>
+#include "mergedialog.h"
+#include "barchartdialog.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -31,13 +33,14 @@ struct player_t{
     QString name="";
     QString team="";
     int number=-1;
+    QImage pic;
     DisplayLabel *lastAppeared_window;
     QPoint lastAppeared_position; //视频坐标系
-    int lastAppearwd_time_ms;
+    int lastAppeared_time_ms, firstAppeared_time_ms;
     QList<QPointF> positions; //标准足球场
     QList<QPointF> positions_label; //png
     QList<QDateTime> appearedTimes;
-    QLineSeries *series_speed, *series_distance;
+    QLineSeries *series_speed=NULL, *series_distance=NULL;
     qreal max_speed=0, max_distance=0;
 };
 
@@ -79,13 +82,18 @@ private slots:
     void playersPositionChanged_right(QList<QPoint>, QList<int>);
     void setVideoInfo(int, QDateTime);
     void addingDone();
-
     void on_pushButton_addNewLabel_clicked();
+    void on_pushButton_generatelabel_clicked();
+    void on_pushButton_merge_clicked();
+    void getPlayerInfo(int idx, QString &name, QString &team, QString &number, QImage &pic);
+    void getPlayersInfo(QString, QList<int>&, QList<qreal>&);
+    void on_pushButton_comparation_clicked();
 
 private:
     void getLabels();
     void updateChart();
     void updateHeat();
+    int mergeId(int, int);
 
     Ui::MainWindow *ui;
     QTimer *timer;
@@ -95,6 +103,8 @@ private:
 
     AddTeamDialog* teamDialog;
     CalibrationDialog* calibrationDialog;
+    MergeDialog* mergeDialog;
+    BarChartDialog* barChartDialog;
 
     QImage image_field, image_outline;
     QTransform video2png_left, video2png_right, video2standard_left, video2standard_right;

@@ -11,21 +11,27 @@ CONFIG += c++11
 
 SOURCES += \
     addteamdialog.cpp \
+    barchartdialog.cpp \
     calibrationdialog.cpp \
     displayLabel.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    mergedialog.cpp
 
 HEADERS += \
     addteamdialog.h \
+    barchartdialog.h \
     calibrationdialog.h \
     displayLabel.h \
-    mainwindow.h
+    mainwindow.h \
+    mergedialog.h
 
 FORMS += \
     addteamdialog.ui \
+    barchartdialog.ui \
     calibrationdialog.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    mergedialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -6,5 +6,7 @@
         <file>pic/ground.png</file>
         <file>pic/field.png</file>
         <file>pic/field_outline.png</file>
+        <file>pic/ball_icon.jfif</file>
+        <file>pic/background.png</file>
     </qresource>
 </RCC>
