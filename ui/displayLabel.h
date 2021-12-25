@@ -12,7 +12,7 @@
 #include <QTime>
 
 struct box_t{
-    int id=-1;
+    int id=-1, cls = -1;
     QRectF rect;
     int x=-1, y=-1, z=-1;
     int selectedPoint=-1; //被选中的点，-1代表没有选中，0,1,2,3分别为左上，右上，右下，左下
@@ -24,7 +24,7 @@ Q_OBJECT
 
 public:
     explicit DisplayLabel(QWidget *parent = nullptr);
-    QList<int> LoadLabelFile(QString);
+    QList<int> LoadLabelFile(QString, QList<int>&);
     QImage LoadVideo(QString);
     QList<box_t> getLabels();
     QList<QList<box_t>>* getAllLabels();

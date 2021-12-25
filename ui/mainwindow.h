@@ -34,6 +34,7 @@ struct player_t{
     QString team="";
     int number=-1;
     QImage pic;
+    bool is_football=false;
     DisplayLabel *lastAppeared_window;
     QPoint lastAppeared_position; //视频坐标系
     int lastAppeared_time_ms, firstAppeared_time_ms;
@@ -113,6 +114,7 @@ private:
     QList<int> ids_left, ids_right;
 
     QPen pen_point;
+    QPen pen_point_ball;
     QPen pen_number;
     QPen pen_trace[20];
     QFont font_number;
