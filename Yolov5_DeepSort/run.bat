@@ -1,0 +1,1 @@
+python track.py --yolo_model yolov5/weights/best.pt --source right.mp4 --save-vid --save-txt
