@@ -287,15 +287,17 @@ void MainWindow::getLabels(){
         QStandardItem* item = new QStandardItem("left");
         item -> setFlags(Qt::NoItemFlags); //设置只读
         row.append(item);
-        item = new QStandardItem(players[id].name);
-        item -> setFlags(Qt::NoItemFlags);
-        row.append(item);
-        item = new QStandardItem(players[id].team);
-        item -> setFlags(Qt::NoItemFlags);
-        row.append(item);
-        item = new QStandardItem(QString::number(players[id].number));
-        item -> setFlags(Qt::NoItemFlags);
-        row.append(item);
+        if (id>=0 && id < players.length()){
+            item = new QStandardItem(players[id].name);
+            item -> setFlags(Qt::NoItemFlags);
+            row.append(item);
+            item = new QStandardItem(players[id].team);
+            item -> setFlags(Qt::NoItemFlags);
+            row.append(item);
+            item = new QStandardItem(QString::number(players[id].number));
+            item -> setFlags(Qt::NoItemFlags);
+            row.append(item);
+        }
         itemModel_labels->appendRow(row);
     }
     labels = ui->video_label_right->getLabels();
@@ -306,15 +308,17 @@ void MainWindow::getLabels(){
         QStandardItem* item = new QStandardItem("right");
         item -> setFlags(Qt::NoItemFlags);
         row.append(item);
-        item = new QStandardItem(players[id].name);
-        item -> setFlags(Qt::NoItemFlags);
-        row.append(item);
-        item = new QStandardItem(players[id].team);
-        item -> setFlags(Qt::NoItemFlags);
-        row.append(item);
-        item = new QStandardItem(QString::number(players[id].number));
-        item -> setFlags(Qt::NoItemFlags);
-        row.append(item);
+        if (id>=0 && id < players.length()){
+            item = new QStandardItem(players[id].name);
+            item -> setFlags(Qt::NoItemFlags);
+            row.append(item);
+            item = new QStandardItem(players[id].team);
+            item -> setFlags(Qt::NoItemFlags);
+            row.append(item);
+            item = new QStandardItem(QString::number(players[id].number));
+            item -> setFlags(Qt::NoItemFlags);
+            row.append(item);
+        }
         itemModel_labels->appendRow(row);
     }
 }
@@ -390,9 +394,9 @@ void MainWindow::on_pushButton_saveLabelFile_clicked()
 void MainWindow::change_label_id(const QModelIndex idx, const QModelIndex, const QList<int>){
     // qDebug() << idx.row() << ' ' << idx.column();
     if (idx.row() < cnt_labels_left)
-        ui->video_label_left->setID(idx.row(), itemModel_labels->item(idx.row(), idx.column())->text().toInt());
+        ui->video_label_left->setID(idx.row(), itemModel_labels->item(idx.row(), idx.column())->text().toInt()/2);
     else
-        ui->video_label_right->setID(idx.row()-cnt_labels_left, itemModel_labels->item(idx.row(), idx.column())->text().toInt());
+        ui->video_label_right->setID(idx.row()-cnt_labels_left, itemModel_labels->item(idx.row(), idx.column())->text().toInt()/2);
 }
 
 void MainWindow::idRemoved(int id){
@@ -522,8 +526,8 @@ void MainWindow::playersPositionChanged_left(QList<QPoint> positions, QList<int>
             continue;
         }
         qreal distance, distance_old;
-        if (cnt > 5)
-            distance = QLineF(player->positions[cnt-5], pos).length()/5;
+        if (cnt > 20)
+            distance = QLineF(player->positions[cnt-20], pos).length()/20;
         else
             distance = QLineF(player->positions[0], pos).length()/cnt;
         distance_old = (player -> series_distance->at(cnt-1)).y();
@@ -636,7 +640,7 @@ void MainWindow::paintEvent(QPaintEvent *){
         // QPoint pos_real = field2label.map(pos);
         // qDebug() << "origin pos:" << positions_left[i].x() << ' ' << positions_right[i].y() << "position in field:" << pos.x() << pos.y()
         //         << " real position:" << pos_real.x() <<' ' << pos_real.y();
-        if (!players[ids_left[i]].is_football)
+        if (ids_left[i]>=0 && !players[ids_left[i]].is_football)
             painter.setPen(pen_point);
         else
             painter.setPen(pen_point_ball);
@@ -646,7 +650,7 @@ void MainWindow::paintEvent(QPaintEvent *){
     }
     for (int i=0; i<positions_right.length(); ++i){
         QPoint pos = video2png_right.map(positions_right[i]);
-        if (!players[ids_right[i]].is_football)
+        if (ids_right[i]>=0 && !players[ids_right[i]].is_football)
             painter.setPen(pen_point);
         else
             painter.setPen(pen_point_ball);
@@ -957,3 +961,10 @@ void MainWindow::on_pushButton_comparation_clicked()
     barChartDialog->exec();
 }
 
+
+void MainWindow::on_comboBox_detail_currentIndexChanged(int index)
+{
+    if (index == 1)
+        updateHeat();
+    update();
+}
