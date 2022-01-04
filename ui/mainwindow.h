@@ -90,6 +90,8 @@ private slots:
     void getPlayersInfo(QString, QList<int>&, QList<qreal>&);
     void on_pushButton_comparation_clicked();
 
+    void on_comboBox_detail_currentIndexChanged(int index);
+
 private:
     void getLabels();
     void updateChart();
